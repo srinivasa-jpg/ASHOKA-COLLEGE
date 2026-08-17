@@ -21,4 +21,11 @@
     roleScript.dataset.roleModule='true';
     document.body.appendChild(roleScript);
   }
+
+  if(!document.querySelector('script[data-section-wise-module]')){
+    const sectionScript=document.createElement('script');
+    sectionScript.src='section-wise-module.js?v=20260818-0517';
+    sectionScript.dataset.sectionWiseModule='true';
+    document.body.appendChild(sectionScript);
+  }
 })();
