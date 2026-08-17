@@ -33,7 +33,6 @@
     return codes.map(code=>({code,name:code}));
   }
 
-  // Student module: make Update and Delete explicit and always available.
   function installStudentActions(){
     const table=document.querySelector('#students table');
     if(table){
@@ -140,7 +139,6 @@
       ['hallBranchFilter','hallYearFilter','hallSemesterFilter'].forEach(id=>document.getElementById(id)?.addEventListener('change',refreshHallStudentFilters));
     }
 
-    // Override global population so filters remain active after student imports/updates.
     populateHallSelects=function(){
       const examSel=document.getElementById('hallExamSelect');
       const currentExam=examSel?.value||'';
@@ -167,4 +165,11 @@
     }
     refreshHallStudentFilters();
   },0));
+
+  if(!document.querySelector('script[data-attendance-loader]')){
+    const loader=document.createElement('script');
+    loader.src='attendance-module.js';
+    loader.dataset.attendanceLoader='true';
+    document.body.appendChild(loader);
+  }
 })();
