@@ -1,0 +1,40 @@
+(function(){
+  function e(v=''){return String(v).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+  function msg(t){if(typeof toast==='function')toast(t);else alert(t)}
+  function ensureData(){if(!Array.isArray(state.faculty))state.faculty=[];saveData()}
+  function branches(){const master=Array.isArray(state.branches)?state.branches.filter(x=>(x.status||'Active')==='Active').map(x=>x.code):[];const students=(state.students||[]).map(x=>x.branch);return [...new Set([...master,...students].filter(Boolean))].sort()}
+  function branchOptions(selected=''){return branches().map(x=>`<option value="${e(x)}" ${x===selected?'selected':''}>${e(x)}</option>`).join('')}
+
+  function styles(){if(document.getElementById('faculty-module-styles'))return;const s=document.createElement('style');s.id='faculty-module-styles';s.textContent=`
+    .faculty-grid{display:grid;grid-template-columns:minmax(300px,390px) 1fr;gap:18px;align-items:start}.faculty-form{display:grid;gap:11px}.faculty-form label{display:grid;gap:6px;font-size:13px;font-weight:800}.faculty-actions{display:flex;gap:6px;white-space:nowrap}.faculty-toolbar{display:flex;gap:9px;flex-wrap:wrap;align-items:center}.faculty-count{font-size:12px;color:var(--muted);font-weight:800}.faculty-login-note{margin-top:10px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface-2);font-size:12px;color:var(--muted);line-height:1.5}@media(max-width:900px){.faculty-grid{grid-template-columns:1fr}}
+  `;document.head.appendChild(s)}
+
+  function ensureView(){const content=document.querySelector('.content');if(!content||document.getElementById('faculty'))return;const sec=document.createElement('section');sec.className='view';sec.id='faculty';sec.innerHTML=`
+    <div class="section-toolbar"><div><h3>Faculty Master</h3><p>Add and manage faculty accounts used for Faculty login.</p></div></div>
+    <div class="faculty-grid">
+      <div class="card"><h3 id="facultyFormTitle">Add Faculty</h3><form id="facultyForm" class="faculty-form">
+        <input type="hidden" id="facultyEditId">
+        <label>Faculty ID<input class="input" id="facultyId" required placeholder="e.g. FAC001"></label>
+        <label>Faculty Name<input class="input" id="facultyName" required placeholder="Faculty name"></label>
+        <label>Branch / Department<select class="input" id="facultyBranch"></select></label>
+        <label>Designation<input class="input" id="facultyDesignation" placeholder="Assistant Professor"></label>
+        <label>Email<input class="input" type="email" id="facultyEmail" placeholder="name@college.edu"></label>
+        <label>Status<select class="input" id="facultyStatus"><option>Active</option><option>Inactive</option></select></label>
+        <div class="button-row"><button class="btn btn-primary" type="submit">Save Faculty</button><button class="btn btn-outline" type="button" id="facultyCancelEdit" hidden>Cancel</button></div>
+      </form><div class="faculty-login-note"><b>Faculty login:</b> Faculty ID is the Login ID. For this prototype, the temporary password is the same Faculty ID.</div></div>
+      <div class="card"><div class="card-head"><div><h3>Faculty</h3><p id="facultyCount"></p></div></div><div class="faculty-toolbar"><input class="input" id="facultySearch" placeholder="Search faculty ID or name..."><span class="faculty-count" id="facultyVisibleCount"></span></div><div class="table-wrap"><table><thead><tr><th>Faculty ID</th><th>Name</th><th>Branch</th><th>Designation</th><th>Email</th><th>Status</th><th>Actions</th></tr></thead><tbody id="facultyBody"></tbody></table></div></div>
+    </div>`;content.appendChild(sec);
+    document.getElementById('facultyForm').addEventListener('submit',saveFaculty);document.getElementById('facultyCancelEdit').addEventListener('click',resetForm);document.getElementById('facultySearch').addEventListener('input',renderFaculty)
+  }
+
+  function ensureNav(){const nav=document.querySelector('.nav');if(!nav||document.querySelector('[data-view="faculty"]'))return;const b=document.createElement('button');b.className='nav-link';b.dataset.view='faculty';b.innerHTML='<span>♟</span>Faculty';const students=document.querySelector('[data-view="students"]');nav.insertBefore(b,students||null);b.addEventListener('click',()=>{navigate('faculty');renderFaculty()})}
+
+  function resetForm(){document.getElementById('facultyEditId').value='';document.getElementById('facultyId').value='';document.getElementById('facultyName').value='';document.getElementById('facultyDesignation').value='';document.getElementById('facultyEmail').value='';document.getElementById('facultyStatus').value='Active';document.getElementById('facultyBranch').innerHTML=branchOptions();document.getElementById('facultyFormTitle').textContent='Add Faculty';document.getElementById('facultyCancelEdit').hidden=true}
+  function saveFaculty(ev){ev.preventDefault();ensureData();const edit=Number(document.getElementById('facultyEditId').value||0),facultyId=document.getElementById('facultyId').value.trim().toUpperCase(),name=document.getElementById('facultyName').value.trim(),branch=document.getElementById('facultyBranch').value,designation=document.getElementById('facultyDesignation').value.trim(),email=document.getElementById('facultyEmail').value.trim(),status=document.getElementById('facultyStatus').value;if(!facultyId||!name)return;const duplicate=state.faculty.find(x=>String(x.facultyId).toUpperCase()===facultyId&&Number(x.id)!==edit);if(duplicate){msg('Faculty ID already exists');return}const rec={id:edit||nextId(state.faculty),facultyId,name,branch,designation,email,status};if(edit)state.faculty=state.faculty.map(x=>Number(x.id)===edit?rec:x);else state.faculty.push(rec);saveData();resetForm();renderFaculty();msg(edit?'Faculty updated':'Faculty added')}
+  window.editFaculty=function(id){const f=(state.faculty||[]).find(x=>Number(x.id)===Number(id));if(!f)return;document.getElementById('facultyEditId').value=f.id;document.getElementById('facultyId').value=f.facultyId;document.getElementById('facultyName').value=f.name;document.getElementById('facultyBranch').innerHTML=branchOptions(f.branch);document.getElementById('facultyDesignation').value=f.designation||'';document.getElementById('facultyEmail').value=f.email||'';document.getElementById('facultyStatus').value=f.status||'Active';document.getElementById('facultyFormTitle').textContent='Update Faculty';document.getElementById('facultyCancelEdit').hidden=false};
+  window.deleteFaculty=function(id){const f=(state.faculty||[]).find(x=>Number(x.id)===Number(id));if(!f)return;if(!confirm(`Delete faculty ${f.facultyId} — ${f.name}?`))return;state.faculty=state.faculty.filter(x=>Number(x.id)!==Number(id));saveData();renderFaculty();msg('Faculty deleted')};
+  function renderFaculty(){ensureData();const q=document.getElementById('facultySearch')?.value.trim().toLowerCase()||'',items=state.faculty.filter(x=>!q||`${x.facultyId} ${x.name} ${x.branch}`.toLowerCase().includes(q));const body=document.getElementById('facultyBody');if(body)body.innerHTML=items.map(f=>`<tr><td><b>${e(f.facultyId)}</b></td><td>${e(f.name)}</td><td>${e(f.branch)}</td><td>${e(f.designation||'')}</td><td>${e(f.email||'')}</td><td>${typeof badge==='function'?badge(f.status):e(f.status)}</td><td><div class="faculty-actions"><button class="table-action" onclick="editFaculty(${f.id})">Update</button><button class="table-action danger" onclick="deleteFaculty(${f.id})">Delete</button></div></td></tr>`).join('')||'<tr><td colspan="7" class="empty-state">No faculty records found.</td></tr>';const c=document.getElementById('facultyCount');if(c)c.textContent=`${state.faculty.length} faculty record(s)`;const v=document.getElementById('facultyVisibleCount');if(v)v.textContent=`${items.length} shown`}
+
+  ensureData();styles();ensureView();ensureNav();resetForm();renderFaculty();
+  if(window.CampusRoles?.applyAccess)setTimeout(()=>window.CampusRoles.applyAccess(),0);
+})();
