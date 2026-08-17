@@ -20,10 +20,7 @@
     return['E',5];
   }
 
-  // Keep this available globally for any later modules.
   window.gradeFromTotal = function(total, external){
-    // When external is not supplied, preserve only the total-based grade.
-    // Result processing in this file always supplies external and enforces both conditions.
     if(external === undefined || external === null){
       total=Number(total)||0;
       if(total>=90)return['S',10];
@@ -183,8 +180,20 @@
     const guide=document.querySelector('#bulkMarksBackdrop .marks-upload-guide p');if(guide)guide.textContent='Hall Ticket, Semester, Subject Code, Internal, External — Pass requires Total ≥ 40 and External ≥ 25';
   }
 
-  function init(){addRuleNotice();installManualSaveRule();recalculateSavedResults();replaceBulkListeners();
-    const observer=new MutationObserver(()=>{addRuleNotice();installManualSaveRule();replaceBulkListeners()});observer.observe(document.body,{childList:true,subtree:true});
+  function init(){
+    addRuleNotice();
+    installManualSaveRule();
+    recalculateSavedResults();
+    replaceBulkListeners();
+    const observer=new MutationObserver(()=>{addRuleNotice();installManualSaveRule();replaceBulkListeners()});
+    observer.observe(document.body,{childList:true,subtree:true});
+
+    if(!document.querySelector('script[data-single-hall-ticket-loader]')){
+      const loader=document.createElement('script');
+      loader.src='single-hall-ticket.js';
+      loader.dataset.singleHallTicketLoader='true';
+      document.body.appendChild(loader);
+    }
   }
   init();
 })();
