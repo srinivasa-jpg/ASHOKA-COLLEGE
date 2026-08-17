@@ -14,4 +14,11 @@
 
   notice();installSave();recalcSaved();
   setTimeout(()=>{notice();installSave()},600);
+
+  if(!document.querySelector('script[data-role-module]')){
+    const roleScript=document.createElement('script');
+    roleScript.src='roles-module.js';
+    roleScript.dataset.roleModule='true';
+    document.body.appendChild(roleScript);
+  }
 })();
