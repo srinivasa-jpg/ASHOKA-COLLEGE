@@ -30,6 +30,17 @@
   }
   function getSession(){try{const s=JSON.parse(localStorage.getItem(SESSION_KEY));return validSession(s)?s:null}catch{return null}}
 
+  function ensureStudentPortal(done){
+    if(window.StudentPortal){done?.();return}
+    const existing=document.querySelector('script[data-student-portal]');
+    if(existing){existing.addEventListener('load',()=>done?.(),{once:true});return}
+    const s=document.createElement('script');s.src='student-portal.js';s.dataset.studentPortal='true';s.onload=()=>done?.();document.body.appendChild(s)
+  }
+  function routeForSession(s){
+    if(s?.role==='student')ensureStudentPortal(()=>{window.StudentPortal?.onLogin(s);if(typeof navigate==='function')navigate('studentportal');window.StudentPortal?.render()});
+    else{window.StudentPortal?.onLogin(s);if(typeof navigate==='function')navigate('dashboard')}
+  }
+
   function setIdentity(s){
     localStorage.setItem(SESSION_KEY,JSON.stringify(s));
     localStorage.setItem(ROLE_KEY,s.role);
@@ -42,6 +53,7 @@
     localStorage.removeItem(SESSION_KEY);
     localStorage.removeItem(ROLE_KEY);
     window.CampusSession=null;
+    window.StudentPortal?.onLogin(null);
     document.getElementById('logoutBtn')?.remove();
     document.getElementById('sidebarLogoutBtn')?.remove();
     document.getElementById('sessionUser')?.remove();
@@ -75,7 +87,7 @@
       ev.preventDefault();
       const s=verify(document.getElementById('loginId').value,document.getElementById('loginPassword').value);
       if(!s){document.getElementById('loginError').textContent='Invalid login ID or password.';return}
-      document.getElementById('loginError').textContent='';setIdentity(s);d.remove();if(typeof navigate==='function')navigate('dashboard');msg(`Welcome ${s.name}`)
+      document.getElementById('loginError').textContent='';setIdentity(s);d.remove();routeForSession(s);msg(`Welcome ${s.name}`)
     })
   }
 
@@ -85,7 +97,9 @@
   }
 
   styles();document.getElementById('roleSwitcher')?.remove();
-  const session=getSession();
-  if(session){window.CampusSession=session;localStorage.setItem(ROLE_KEY,session.role);if(window.CampusRoles?.setRole)window.CampusRoles.setRole(session.role,true);updateTopbar(session);updateProfile(session)}else showLogin();
+  ensureStudentPortal(()=>{
+    const session=getSession();
+    if(session){window.CampusSession=session;localStorage.setItem(ROLE_KEY,session.role);if(window.CampusRoles?.setRole)window.CampusRoles.setRole(session.role,true);updateTopbar(session);updateProfile(session);routeForSession(session)}else showLogin();
+  });
   window.CampusLogin={logout:clearSession,getSession};
 })();
