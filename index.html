@@ -118,7 +118,11 @@
               <h3>Student Master</h3>
               <p>Maintain examination-related student records.</p>
             </div>
-            <button class="btn btn-primary" id="addStudentBtn">+ Add Student</button>
+            <div class="button-row toolbar-buttons">
+              <button class="btn btn-outline" id="downloadStudentTemplateBtn">Download Template</button>
+              <button class="btn btn-outline" id="bulkStudentBtn">Bulk Upload</button>
+              <button class="btn btn-primary" id="addStudentBtn">+ Add Student</button>
+            </div>
           </div>
 
           <div class="card">
@@ -373,8 +377,76 @@
     </div>
   </div>
 
+
+  <!-- BULK STUDENT UPLOAD MODAL -->
+  <div class="modal-backdrop" id="bulkModalBackdrop" hidden>
+    <div class="modal bulk-modal" role="dialog" aria-modal="true" aria-labelledby="bulkModalTitle">
+      <div class="modal-head">
+        <div>
+          <h3 id="bulkModalTitle">Bulk Student Upload</h3>
+          <p class="modal-subtitle">Upload CSV or Excel and preview records before importing.</p>
+        </div>
+        <button class="icon-btn" id="closeBulkModalBtn" type="button">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="upload-guide">
+          <div>
+            <b>Required columns</b>
+            <p>Hall Ticket, Name, Branch, Year, Semester, Regulation, Status</p>
+          </div>
+          <button class="btn btn-outline" id="downloadTemplateInsideBtn" type="button">Download CSV Template</button>
+        </div>
+
+        <label class="drop-zone" id="studentDropZone">
+          <input type="file" id="bulkStudentFile" accept=".csv,.xlsx,.xls" hidden />
+          <span class="drop-icon">⇧</span>
+          <b>Choose CSV / Excel file</b>
+          <small>or drag and drop it here</small>
+          <small class="muted">Maximum recommended size: 5,000 students per upload</small>
+        </label>
+
+        <div class="bulk-options">
+          <label>Duplicate Hall Ticket
+            <select class="input" id="duplicatePolicy">
+              <option value="skip">Skip existing students</option>
+              <option value="update">Update existing students</option>
+            </select>
+          </label>
+        </div>
+
+        <div id="bulkUploadSummary" class="bulk-summary" hidden></div>
+
+        <div class="bulk-preview-wrap" id="bulkPreviewWrap" hidden>
+          <div class="card-head compact">
+            <div>
+              <h3>Preview</h3>
+              <p id="bulkPreviewText">Review parsed rows.</p>
+            </div>
+          </div>
+          <div class="table-wrap bulk-preview">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th><th>Hall Ticket</th><th>Name</th><th>Branch</th><th>Year</th><th>Semester</th><th>Regulation</th><th>Status</th><th>Validation</th>
+                </tr>
+              </thead>
+              <tbody id="bulkPreviewBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-outline" id="cancelBulkBtn" type="button">Cancel</button>
+        <button class="btn btn-primary" id="importStudentsBtn" type="button" disabled>Import Students</button>
+      </div>
+    </div>
+  </div>
+
   <div class="toast" id="toast" aria-live="polite"></div>
 
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
