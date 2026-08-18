@@ -4,7 +4,7 @@
   const sectionOf=s=>String(s?.section||'A').trim().toUpperCase()||'A';
 
   function migrateStudents(){
-    if(!Array.isArray(window.state?.students))return;
+    if(typeof state==='undefined'||!Array.isArray(state.students))return;
     let changed=false;
     state.students.forEach(s=>{if(!String(s.section||'').trim()){s.section='A';changed=true}else{s.section=sectionOf(s)}});
     if(changed&&typeof saveData==='function')saveData();
@@ -94,7 +94,8 @@
   function enhanceStudentPortal(){
     const body=document.getElementById('studentPortalBody');if(!body)return;
     const student=window.CampusSession?.role==='student'?(state.students||[]).find(x=>Number(x.id)===Number(window.CampusSession.studentId)):null;if(!student)return;
-    const grid=body.querySelector('.student-detail-grid');if(!grid||grid.querySelector('[data-student-section-detail]'))return;
+    const grid=body.querySelector('.student-detail-grid');if(!grid)return;
+    const existing=[...grid.querySelectorAll('.student-detail-item small')].find(x=>x.textContent.trim().toLowerCase()==='section');if(existing)return;
     const item=document.createElement('div');item.className='student-detail-item';item.dataset.studentSectionDetail='1';item.innerHTML=`<small>Section</small><b>${e(sectionOf(student))}</b>`;
     const yearItem=[...grid.children].find(x=>x.querySelector('small')?.textContent.trim()==='Year');grid.insertBefore(item,yearItem||null);
   }
