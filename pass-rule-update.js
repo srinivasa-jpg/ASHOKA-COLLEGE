@@ -22,10 +22,24 @@
     document.body.appendChild(roleScript);
   }
 
-  if(!document.querySelector('script[data-section-wise-module]')){
+  function loadSeatingAttendanceSync(){
+    if(document.querySelector('script[data-seating-attendance-sync]'))return;
+    const syncScript=document.createElement('script');
+    syncScript.src='seating-attendance-sync.js?v=20260818-0526';
+    syncScript.dataset.seatingAttendanceSync='true';
+    document.body.appendChild(syncScript);
+  }
+
+  const existingSectionScript=document.querySelector('script[data-section-wise-module]');
+  if(existingSectionScript){
+    if(window.SectionWiseModule)loadSeatingAttendanceSync();
+    else existingSectionScript.addEventListener('load',loadSeatingAttendanceSync,{once:true});
+  }else{
     const sectionScript=document.createElement('script');
-    sectionScript.src='section-wise-module.js?v=20260818-0517';
+    sectionScript.src='section-wise-module.js?v=20260818-0526';
     sectionScript.dataset.sectionWiseModule='true';
+    sectionScript.onload=loadSeatingAttendanceSync;
+    sectionScript.onerror=loadSeatingAttendanceSync;
     document.body.appendChild(sectionScript);
   }
 })();
