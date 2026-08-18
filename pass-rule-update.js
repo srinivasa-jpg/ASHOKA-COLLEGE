@@ -42,4 +42,11 @@
     sectionScript.onerror=loadSeatingAttendanceSync;
     document.body.appendChild(sectionScript);
   }
+
+  if(!document.querySelector('script[data-student-attendance-module]')){
+    const attendanceScript=document.createElement('script');
+    attendanceScript.src='student-attendance-module.js?v=20260818-0558';
+    attendanceScript.dataset.studentAttendanceModule='true';
+    document.body.appendChild(attendanceScript);
+  }
 })();
