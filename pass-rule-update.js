@@ -45,7 +45,7 @@
 
   if(!document.querySelector('script[data-student-attendance-module]')){
     const attendanceScript=document.createElement('script');
-    attendanceScript.src='student-attendance-module.js?v=20260818-0558';
+    attendanceScript.src='student-attendance-module.js?v=20260818-0635';
     attendanceScript.dataset.studentAttendanceModule='true';
     document.body.appendChild(attendanceScript);
   }
@@ -55,5 +55,12 @@
     marksScript.src='class-marks-entry.js?v=20260818-0603';
     marksScript.dataset.classMarksEntry='true';
     document.body.appendChild(marksScript);
+  }
+
+  if(!document.querySelector('script[data-attendance-menu-fix]')){
+    const fix=document.createElement('script');
+    fix.src='attendance-menu-fix.js?v=20260818-0635';
+    fix.dataset.attendanceMenuFix='true';
+    document.body.appendChild(fix);
   }
 })();
