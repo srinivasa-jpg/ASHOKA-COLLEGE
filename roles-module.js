@@ -14,6 +14,7 @@
     {key:'halltickets',label:'Hall Tickets',actions:['view','bulk']},
     {key:'seating',label:'Seating Plan',actions:['view','bulk']},
     {key:'attendance',label:'Exam Attendance',actions:['view','bulk']},
+    {key:'classattendance',label:'Class Attendance',actions:['view','update']},
     {key:'marks',label:'Marks & Results',actions:['view','update','bulk']},
     {key:'reports',label:'Reports',actions:['view','bulk']},
     {key:'settings',label:'Settings',actions:['view','update']},
@@ -22,14 +23,14 @@
   const ROLES={
     admin:{label:'Admin',desc:'Full system access'},
     exam:{label:'Exam Section',desc:'Examination operations and reports'},
-    faculty:{label:'Faculty',desc:'Student, subject and marks access'},
-    student:{label:'Students',desc:'Student dashboard, results, fee due and active hall ticket'}
+    faculty:{label:'Faculty',desc:'Student, subject, attendance and marks access'},
+    student:{label:'Students',desc:'Student dashboard, attendance, results, fee due and active hall ticket'}
   };
   const DEFAULTS={
     admin:{},
     exam:{dashboard:{view:true},faculty:{view:true},students:{view:true},subjects:{view:true},examsection:{view:true},exams:{view:true,add:true,update:true,delete:true},halltickets:{view:true,bulk:true},seating:{view:true,bulk:true},attendance:{view:true,bulk:true},marks:{view:true,update:true,bulk:true},reports:{view:true,bulk:true}},
-    faculty:{dashboard:{view:true},students:{view:true},subjects:{view:true},marks:{view:true,update:true}},
-    student:{studentportal:{view:true}}
+    faculty:{dashboard:{view:true},students:{view:true},subjects:{view:true},classattendance:{view:true,update:true},marks:{view:true,update:true}},
+    student:{studentportal:{view:true},classattendance:{view:true}}
   };
   MODULES.forEach(m=>{DEFAULTS.admin[m.key]={};m.actions.forEach(a=>DEFAULTS.admin[m.key][a]=true)});
   let currentRole=localStorage.getItem(ROLE_KEY)||'admin';if(!ROLES[currentRole])currentRole='admin';
@@ -68,6 +69,7 @@
     const reset=document.getElementById('resetDemoBtn');if(reset)reset.classList.toggle('role-hidden',currentRole!=='admin');
     if(typeof window.refreshStudentAdminControls==='function')window.refreshStudentAdminControls();
     if(typeof window.refreshFacultyPermissions==='function')window.refreshFacultyPermissions();
+    window.ClassAttendance?.applyAccess?.();
   }
   function applyAccess(){const allowed=new Set(MODULES.filter(m=>can(m.key,'view')).map(m=>m.key));document.querySelectorAll('.nav-link[data-view]').forEach(btn=>btn.classList.toggle('role-hidden',!allowed.has(btn.dataset.view)));const examWrap=document.getElementById('examModuleNav');if(examWrap)examWrap.classList.toggle('role-hidden',!['exams','halltickets','seating','attendance','marks'].some(v=>allowed.has(v)));document.querySelectorAll('[data-jump]').forEach(btn=>{if(btn.dataset.jump)btn.classList.toggle('role-hidden',!allowed.has(btn.dataset.jump))});applyActionControls();updateRoleProfile();const active=document.querySelector('.view.active')?.id;if(active&&!allowed.has(active)&&typeof navigate==='function')navigate(currentRole==='student'&&allowed.has('studentportal')?'studentportal':'dashboard');renderRoles()}
   function setRole(role,silent=false){if(!ROLES[role])return;currentRole=role;localStorage.setItem(ROLE_KEY,role);applyAccess();if(!silent)msg(`Role changed to ${ROLES[role].label}`)}
