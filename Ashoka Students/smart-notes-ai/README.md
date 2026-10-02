@@ -1,28 +1,44 @@
 # Smart Notes AI
 
-A beginner-friendly AI project for Ashoka students that summarizes study notes.
+A beginner-friendly study-notes summarizer for Ashoka students.
 
-## Features
-- Paste study notes
-- Generate a concise summary
-- Extract key points
-- Simple FastAPI backend
-- Ready to extend with PDF upload, flashcards, quizzes, and an LLM API
+## V2 features
+- Paste notes in a web interface
+- Upload PDF or TXT notes (up to 10 MB)
+- Generate a concise extractive summary
+- Show key points
+- FastAPI backend + built-in frontend
+- No API key required
 
 ## Run locally
 
 ```bash
-cd backend
+cd "Ashoka Students/smart-notes-ai/backend"
 python -m venv .venv
 source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
 
-Open http://127.0.0.1:8000/docs and try POST /summarize.
+Open `http://127.0.0.1:8000`.
 
-## Next steps
-1. Connect an LLM API for higher-quality summaries.
-2. Add PDF/text-file upload.
-3. Add a Next.js frontend.
-4. Add flashcards and quiz generation.
+API documentation is available at `http://127.0.0.1:8000/docs`.
+
+## Project structure
+
+```text
+smart-notes-ai/
+├── backend/
+│   ├── app/
+│   │   ├── main.py
+│   │   └── static/
+│   │       ├── index.html
+│   │       └── style.css
+│   └── requirements.txt
+├── .env.example
+├── .gitignore
+└── README.md
+```
+
+## Next milestone
+Add optional LLM-powered summaries, flashcards, quizzes, and question-answering over uploaded notes.
