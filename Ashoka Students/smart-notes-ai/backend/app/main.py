@@ -1,8 +1,16 @@
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, Field
+from pathlib import Path
 import re
 
-app = FastAPI(title="Smart Notes AI", version="0.1.0")
+from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel, Field
+from pypdf import PdfReader
+from io import BytesIO
+
+app = FastAPI(title="Smart Notes AI", version="0.2.0")
+STATIC_DIR = Path(__file__).parent / "static"
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 
 class NotesRequest(BaseModel):
@@ -15,32 +23,29 @@ class SummaryResponse(BaseModel):
 
 
 def split_sentences(text: str) -> list[str]:
-    return [
-        sentence.strip()
-        for sentence in re.split(r"(?<=[.!?])\s+", text.strip())
-        if sentence.strip()
-    ]
+    return [s.strip() for s in re.split(r"(?<=[.!?])\s+", text.strip()) if s.strip()]
 
 
 def summarize_notes(text: str) -> SummaryResponse:
     sentences = split_sentences(text)
     if not sentences:
         raise ValueError("No readable sentences found.")
-
-    # V1 uses a lightweight extractive approach so the project works
-    # without API keys. This can later be replaced by an LLM service.
-    summary_sentences = sentences[: min(3, len(sentences))]
-    key_points = sentences[: min(5, len(sentences))]
-
-    return SummaryResponse(
-        summary=" ".join(summary_sentences),
-        key_points=key_points,
+    # Local V2 baseline: works without an API key.
+    # A hosted/local LLM can replace this function later.
+    scored = sorted(
+        enumerate(sentences),
+        key=lambda item: len(set(re.findall(r"\w+", item[1].lower()))),
+        reverse=True,
     )
+    chosen_indexes = sorted(i for i, _ in scored[: min(3, len(scored))])
+    summary = " ".join(sentences[i] for i in chosen_indexes)
+    key_points = [text for _, text in scored[: min(5, len(scored))]]
+    return SummaryResponse(summary=summary, key_points=key_points)
 
 
 @app.get("/")
-def root():
-    return {"message": "Smart Notes AI API is running"}
+def home():
+    return FileResponse(STATIC_DIR / "index.html")
 
 
 @app.post("/summarize", response_model=SummaryResponse)
@@ -49,3 +54,28 @@ def summarize(request: NotesRequest):
         return summarize_notes(request.text)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.post("/upload", response_model=SummaryResponse)
+async def upload(file: UploadFile = File(...)):
+    name = (file.filename or "").lower()
+    data = await file.read()
+    if len(data) > 10 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="File must be 10 MB or smaller.")
+
+    try:
+        if name.endswith(".pdf"):
+            reader = PdfReader(BytesIO(data))
+            text = "\n".join(page.extract_text() or "" for page in reader.pages)
+        elif name.endswith(".txt"):
+            text = data.decode("utf-8")
+        else:
+            raise HTTPException(status_code=415, detail="Upload a PDF or TXT file.")
+
+        if len(text.strip()) < 20:
+            raise HTTPException(status_code=400, detail="Not enough readable text found.")
+        return summarize_notes(text)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail="Could not read this file.") from exc
