@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Smart Notes AI</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <main class="container">
+    <header><span class="badge">Ashoka Students</span><h1>Smart Notes AI</h1><p>Turn long study notes into a quick summary and key points.</p></header>
+    <section class="card">
+      <label for="notes">Paste your notes</label>
+      <textarea id="notes" placeholder="Paste at least a few sentences of your study notes here..."></textarea>
+      <div class="actions"><button id="summarize">Summarize notes</button><span>or</span><label class="upload">Upload PDF/TXT<input id="file" type="file" accept=".pdf,.txt"></label></div>
+      <p id="status"></p>
+    </section>
+    <section id="result" class="card hidden">
+      <h2>Summary</h2><p id="summary"></p>
+      <h2>Key points</h2><ul id="points"></ul>
+    </section>
+  </main>
+<script>
+const statusEl=document.getElementById("status"), result=document.getElementById("result");
+function show(data){document.getElementById("summary").textContent=data.summary;const ul=document.getElementById("points");ul.innerHTML="";data.key_points.forEach(p=>{const li=document.createElement("li");li.textContent=p;ul.appendChild(li)});result.classList.remove("hidden");statusEl.textContent="Done."}
+async function request(url,options){statusEl.textContent="Summarizing...";result.classList.add("hidden");try{const r=await fetch(url,options);const data=await r.json();if(!r.ok)throw new Error(data.detail||"Something went wrong");show(data)}catch(e){statusEl.textContent=e.message}}
+document.getElementById("summarize").onclick=()=>request("/summarize",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text:document.getElementById("notes").value})});
+document.getElementById("file").onchange=e=>{if(!e.target.files[0])return;const f=new FormData();f.append("file",e.target.files[0]);request("/upload",{method:"POST",body:f})};
+</script>
+</body></html>
